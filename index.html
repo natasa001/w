@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Camera Access Test</title>
+  <title>Barcode Scanner</title>
   <style>
     #video {
       width: 100%;
@@ -11,52 +11,35 @@
     #result {
       margin-top: 20px;
       font-size: 1.2em;
-      color: red;
+      color: green;
     }
   </style>
 </head>
 <body>
-  <h1>Camera Access Test</h1>
+  <h1>Barcode Scanner</h1>
   <video id="video" autoplay playsinline></video>
-  <div id="result">Checking camera access...</div>
+  <div id="result">Scanning barcode...</div>
 
+  <script src="https://unpkg.com/@zxing/library@latest"></script>
   <script>
     const video = document.getElementById('video');
     const resultDiv = document.getElementById('result');
+    const codeReader = new ZXing.BrowserMultiFormatReader();
 
-    // 检查浏览器是否支持摄像头访问
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      resultDiv.innerText = 'Your browser does not support camera access. Please use a modern browser like Chrome, Firefox, or Edge.';
-    } else {
-      // 请求摄像头权限
-      navigator.mediaDevices.getUserMedia({ video: true })
-        .then((stream) => {
-          video.srcObject = stream;
-          video.play();
-          resultDiv.innerText = 'Camera access granted.';
-        })
-        .catch((err) => {
-          let errorMessage = 'Error accessing the camera: ';
-          switch (err.name) {
-            case 'NotAllowedError':
-              errorMessage = 'Camera access was denied. Please allow camera permissions.';
-              break;
-            case 'NotFoundError':
-              errorMessage = 'No camera found on this device.';
-              break;
-            case 'NotReadableError':
-              errorMessage = 'Camera is already in use by another application.';
-              break;
-            case 'OverconstrainedError':
-              errorMessage = 'Camera does not support the requested constraints.';
-              break;
-            default:
-              errorMessage += err.message;
-          }
-          resultDiv.innerText = errorMessage;
-          console.error(err);
-        });
-    }
+    // 启动条码扫描
+    codeReader.decodeFromVideoDevice(null, video, (result, err) => {
+      if (result) {
+        resultDiv.innerText = `Barcode detected: ${result.text}`;
+      }
+      if (err && !(err instanceof ZXing.NotFoundException)) {
+        console.error('Error scanning barcode: ', err);
+        resultDiv.innerText = 'Failed to scan barcode.';
+      }
+    })
+    .catch((err) => {
+      console.error('Error accessing the camera: ', err);
+      resultDiv.innerText = 'Failed to access the camera.';
+    });
   </script>
 </body>
 </html>
